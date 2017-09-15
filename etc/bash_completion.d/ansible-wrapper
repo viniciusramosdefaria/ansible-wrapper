@@ -1,0 +1,35 @@
+_ansible()
+{ 
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    first_opts="$(cat /etc/ansible/hosts | grep -e "^\[.*\]"|grep -v :|tr -d []) help"
+    second_opts="$(ls -1 /etc/ansible/roles)"
+
+    if [ "$COMP_CWORD" -eq 1 ]; then
+        for ((i = 0; i < ${#first_opts}; i++)); do
+                if [[ ${cur} == * ]]; then
+                        COMPREPLY=( $(compgen -W "${first_opts}" -- ${cur}) )
+                        return 0
+                fi
+        done
+    elif [ "$COMP_CWORD" -eq 2 ]; then
+        for ((i = 0; i < ${#second_opts}; i++)); do
+                if [[ ${prev} != "help" ]]; then
+                        COMPREPLY=( $(compgen -W "${second_opts}" -- ${cur}) )
+                        return 0
+                fi
+        done
+    elif [ "$COMP_CWORD" -eq 3 ]; then
+        local third_opts="$(cat /etc/ansible/roles/${prev}/tasks/*|grep tag| sed 's/  tags: //'| sed 's/,\s*/\n/g'|sort|uniq)"
+        for ((i = 0; i < ${#third_opts}; i++)); do
+                if [[ ${cur} = * ]]; then
+                        COMPREPLY=( $(compgen -W "${third_opts}" -- ${cur}) )
+                        return 0
+                fi
+        done
+    fi
+}
+
+complete -F _ansible ansible-wrapper

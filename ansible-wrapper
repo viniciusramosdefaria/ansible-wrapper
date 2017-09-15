@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ "$1" = "help" ]
+then
+    echo "usage: ansible-wrapper group role tag env [any-ansible-playbook-args]"
+    exit 0
+fi
+
+all_vars=( "$@" )
+hosts=$1
+role=$2
+tag=$3
+version=$4
+ansible_home=/etc/ansible
+
+cat <<EOF > /tmp/book.yaml
+- hosts: $1
+  remote_user: root
+  vars_files:
+    - $ansible_home/group_vars/$1
+  roles:
+    - { role: $2 , app_env: $4}
+EOF
+
+exec ansible-playbook /tmp/book.yaml --tags "$3" "${all_vars[@]:4}"
